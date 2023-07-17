@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Text.Json;
 using System.Xml.Linq;
-using Microsoft.Extensions.Caching.Distributed;
 
 namespace RenderingRSS.Pages
 {
@@ -11,16 +9,14 @@ namespace RenderingRSS.Pages
         private const int PageSize = 10;
 
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IDistributedCache _cache;
 
         public List<RssItem> RssItems { get; set; } = new();
         public int CurrentPage { get; set; } = 0;
         public int TotalPages { get; set; } = 0;
 
-        public IndexModel(IHttpClientFactory httpClientFactory, IDistributedCache cache)
+        public IndexModel(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
-            _cache = cache;
         }
 
         public async Task<IActionResult> OnGetAsync(int pageNumber = 1)
@@ -45,9 +41,6 @@ namespace RenderingRSS.Pages
                     .Take(PageSize)
                     .ToList();
 
-                var starredFeedsJson = JsonSerializer.Serialize(RssItems);
-                await _cache.SetStringAsync("starredFeeds", starredFeedsJson);
-
                 return Page();
             }
             else
@@ -60,16 +53,19 @@ namespace RenderingRSS.Pages
         {
             var favoriteFeeds = GetFavoriteFeedsFromCookie();
 
-            if (favoriteFeeds.Contains(link))
+            if (!string.IsNullOrEmpty(link))
             {
-                favoriteFeeds.Remove(link);
-            }
-            else
-            {
-                favoriteFeeds.Add(link);
-            }
+                if (favoriteFeeds.Contains(link))
+                {
+                    favoriteFeeds.Remove(link);
+                }
+                else
+                {
+                    favoriteFeeds.Add(link);
+                }
 
-            SetFavoriteFeedsInCookie(favoriteFeeds);
+                SetFavoriteFeedsInCookie(favoriteFeeds);
+            }
 
             return RedirectToPage("/Index", new { pageNumber });
         }
@@ -86,8 +82,11 @@ namespace RenderingRSS.Pages
 
         private void SetFavoriteFeedsInCookie(List<string> favoriteFeeds)
         {
-            var favoriteFeedsCookieValue = string.Join(',', favoriteFeeds);
-            HttpContext.Response.Cookies.Append("FavoriteFeeds", favoriteFeedsCookieValue);
+            if (favoriteFeeds.Count > 0)
+            {
+                var favoriteFeedsCookieValue = string.Join(',', favoriteFeeds);
+                HttpContext.Response.Cookies.Append("FavoriteFeeds", favoriteFeedsCookieValue);
+            }
         }
 
         private List<string> ParseOpmlContent(string opmlContent)
