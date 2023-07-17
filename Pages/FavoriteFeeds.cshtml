@@ -1,53 +1,27 @@
-﻿@page
+@page
 @model RenderingRSS.Pages.FavoriteFeedsModel
 @{
     ViewData["Title"] = "Favorite Feeds";
 }
 
-<h1>Favorite Feeds</h1>
+<h1 class="mt-4">Favorite Feeds</h1>
 
-@if (Model.FavoriteRssItems.Count > 0)
+@if (Model.FavoriteFeeds.Count > 0)
 {
     <div class="card-deck">
-        @foreach (var item in Model.FavoriteRssItems)
+        @foreach (var feed in Model.FavoriteFeeds)
         {
             <div class="card mb-3">
                 <div class="card-body">
-                    <p class="card-text">@Html.Raw(item.Description)</p>
-                    <p class="card-text"><small class="text-muted">@item.PubDate</small></p>
-                    <a href="@item.Link" class="btn btn-primary" target="_blank">Read More</a>
+                    <h5 class="card-title">Starred Feed</h5>
+                    <a href="@feed" class="btn btn-primary" target="_blank">Open Feed</a>
                 </div>
             </div>
         }
+
     </div>
-
-    <nav>
-        <ul class="pagination">
-            @if (Model.CurrentPage > 1)
-            {
-                <li class="page-item"><a class="page-link" href="/FavoriteFeeds?pageNumber=@(Model.CurrentPage - 1)">Previous</a></li>
-            }
-
-            @for (var i = 1; i <= Model.TotalPages; i++)
-            {
-                <li class="page-item @(i == Model.CurrentPage ? "active" : "")"><a class="page-link" href="/FavoriteFeeds?pageNumber=@i">@i</a></li>
-            }
-
-            @if (Model.CurrentPage < Model.TotalPages)
-            {
-                <li class="page-item"><a class="page-link" href="/FavoriteFeeds?pageNumber=@(Model.CurrentPage + 1)">Next</a></li>
-            }
-        </ul>
-    </nav>
 }
 else
 {
     <p>No favorite feeds found.</p>
 }
-
-<style>
-    .pagination {
-        display: flex;
-        justify-content: center;
-    }
-</style>
